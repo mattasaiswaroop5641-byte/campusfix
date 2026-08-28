@@ -21,9 +21,9 @@ export type Department =
 
 export type Block = 
   | 'Block A'
-  | 'Block B'
-  | 'Block C'
-  | 'Block D';
+  | 'Block H'
+  | 'Block N'
+  | 'Block U';
 
 export type Section = 
   | 'Section A'

@@ -22,9 +22,9 @@ export const DEPARTMENTS: Department[] = [
 
 export const BLOCKS: Block[] = [
   'Block A',
-  'Block B',
-  'Block C',
-  'Block D'
+  'Block H',
+  'Block N',
+  'Block U'
 ];
 
 export const SECTIONS: Section[] = [

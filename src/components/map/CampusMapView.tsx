@@ -30,30 +30,30 @@ export const CampusMapView: React.FC = () => {
   }[] = [
     {
       id: 'Block A',
-      name: 'Block A - Turing Hall',
+      name: 'Block A - Main Academic Block',
       depts: ['CSE', 'Information Tech', 'Cybersecurity'],
       description: 'Houses computer laboratories 1-5, faculty offices, and server room.',
       color: 'blue'
     },
     {
-      id: 'Block B',
-      name: 'Block B - Shannon Hall',
-      depts: ['AI & ML', 'ECE', 'Robotics Lab'],
+      id: 'Block H',
+      name: 'Block H - Engineering & Tech Block',
+      depts: ['AI & ML', 'ECE', 'Robotics Lab', 'Data Science'],
       description: 'Specialized deep learning servers, seminar halls, and electronics labs.',
       color: 'indigo'
     },
     {
-      id: 'Block C',
-      name: 'Block C - Ramanujan Wing',
-      depts: ['BCA', 'Civil Engineering', 'Applied Sciences'],
-      description: 'Classrooms 101-300, material testing labs, and adjacent campus cafeteria.',
+      id: 'Block N',
+      name: 'Block N - Science & Post-Graduate Block',
+      depts: ['MCA', 'MTech', 'BCA', 'Civil Engineering', 'Applied Sciences'],
+      description: 'Classrooms 101-300, material testing labs, and computational centers.',
       color: 'emerald'
     },
     {
-      id: 'Block D',
-      name: 'Block D - Edison Complex',
-      depts: ['Mechanical', 'EEE', 'Mechatronics Workshops'],
-      description: 'Heavy machinery labs, fluid mechanics facilities, and electrical substation.',
+      id: 'Block U',
+      name: 'Block U - University Central & Professional Block',
+      depts: ['MBA', 'BCom', 'BBA', 'Mechanical', 'EEE', 'Pharmacy'],
+      description: 'Central auditorium, management facilities, fluid labs, and main substation.',
       color: 'amber'
     }
   ];
