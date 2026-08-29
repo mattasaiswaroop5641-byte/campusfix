@@ -5,6 +5,7 @@ import { analyzeCampusReport, detectRecurringIssues } from '../services/aiServic
 import { emailService } from '../services/emailService';
 import { apiService } from '../services/apiService';
 import { logService } from '../services/logService';
+import { adminService, AdminAccount } from '../services/adminService';
 
 interface ToastMessage {
   id: string;
@@ -51,7 +52,7 @@ interface AppContextType {
   login: (user: UserProfile) => void;
   loginStudent: (name: string, department: Department, block: Block, section: Section, regNumber?: string) => void;
   loginFaculty: (name: string, department: Department, block: Block, facultyId?: string) => void;
-  loginAdmin: () => void;
+  loginAdmin: (adminEmail?: string) => void;
   logout: () => void;
   
   // Issue operations
@@ -223,21 +224,25 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     addToast('info', 'Security Email Sent', `Login alert dispatched to ${user.email}`);
   };
 
-  const loginAdmin = () => {
+  const loginAdmin = (adminEmail?: string) => {
+    const cleanEmail = (adminEmail || 'mattasaiswaroop5641@gmail.com').trim().toLowerCase();
+    const allAdmins = adminService.getAdmins();
+    const matched = allAdmins.find((a: AdminAccount) => a.email.toLowerCase() === cleanEmail);
+
     const user: UserProfile = {
-      id: 'admin_1',
+      id: matched?.id || 'admin_1',
       regNumber: 'ADMIN-001',
-      name: 'Campus Administrator',
+      name: matched?.name || 'Campus Administrator',
       role: 'admin',
-      department: 'Other',
+      department: (matched?.department || 'Other') as Department,
       block: 'Block A',
-      email: 'mattasaiswaroop5641@gmail.com'
+      email: cleanEmail
     };
     setCurrentUser(user);
     setIsWelcomeModalOpen(false);
     setActiveTab('dashboard');
     apiService.sendAuthEmail('login', user);
-    addToast('info', 'Admin Access Granted', 'Welcome to CampusFix Central Command Dashboard');
+    addToast('info', 'Admin Access Granted', `Welcome ${user.name} to CampusFix Central Command Dashboard`);
   };
 
   const logout = () => {

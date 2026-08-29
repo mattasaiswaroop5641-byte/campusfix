@@ -113,7 +113,7 @@ export const AdminLogin: React.FC<AdminLoginProps> = ({ onBack }) => {
     if (!is2FARequired) {
       securityService.recordSuccessfulLogin(cleanEmail);
       addToast('success', 'Admin Access Granted', 'Signed in directly (2FA is currently turned OFF).');
-      loginAdmin();
+      loginAdmin(cleanEmail);
       return;
     }
 
@@ -191,7 +191,7 @@ export const AdminLogin: React.FC<AdminLoginProps> = ({ onBack }) => {
         addToast('success', 'Email OTP Verified', 'Administrator access clearance granted.');
         
         setTimeout(() => {
-          loginAdmin();
+          loginAdmin(email.trim().toLowerCase());
         }, 500);
       } else {
         const lockResult = securityService.recordFailedAttempt(email, 'Invalid Email OTP: ' + codeToVerify);
@@ -215,7 +215,7 @@ export const AdminLogin: React.FC<AdminLoginProps> = ({ onBack }) => {
           addToast('success', '2FA Authorized', 'Google Authenticator cryptographic challenge passed.');
           
           setTimeout(() => {
-            loginAdmin();
+            loginAdmin(email.trim().toLowerCase());
           }, 500);
         } else {
           setIsVerifying(false);
