@@ -65,7 +65,7 @@ export const emailService = {
     } catch {}
   },
 
-  sendAdminIssueAlert(issue: CampusIssue): AdminEmailNotification {
+  buildAdminIssueAlert(issue: CampusIssue): AdminEmailNotification {
     const now = new Date();
     const timestamp = now.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) + ' ' +
                       now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
@@ -117,14 +117,14 @@ export const emailService = {
           </div>
         </div>
         <div style="background: #f8fafc; border-top: 1px solid #e2e8f0; padding: 14px 24px; font-size: 11px; color: #64748b; text-align: center; line-height: 1.6;">
-          Dispatched to <strong>${PRIMARY_ADMIN_EMAIL}</strong> & <strong>${SECONDARY_ADMIN_EMAIL}</strong><br />
+          Dispatched to <strong>${ADMIN_EMAILS.join(', ')}</strong><br />
           CampusFix Smart Facility Dispatch Network
         </div>
       </div>
     `;
 
-    const newEmail: AdminEmailNotification = {
-      id: 'eml_' + Date.now() + '_' + Math.random().toString(36).substr(2, 4),
+    return {
+      id: 'eml_' + issue.id + '_' + Date.now(),
       to: ADMIN_EMAILS.join(', '),
       from: 'dispatch-bot@campusfix.internal',
       subject,
@@ -141,9 +141,12 @@ export const emailService = {
       recommendedAction: issue.aiAnalysis?.recommendedAction || 'Inspect and triage ticket.',
       htmlBody
     };
+  },
 
+  sendAdminIssueAlert(issue: CampusIssue): AdminEmailNotification {
+    const newEmail = this.buildAdminIssueAlert(issue);
     const inbox = this.getInbox();
-    const updated = [newEmail, ...inbox];
+    const updated = [newEmail, ...inbox.filter(e => e.issueId !== issue.id)];
     this.saveInbox(updated);
 
     // Audit log
@@ -178,20 +181,24 @@ export const emailService = {
   },
 
   syncWithIssues(activeIssues: CampusIssue[]): AdminEmailNotification[] {
-    const activeIds = new Set(activeIssues.map(i => i.id));
-    let currentInbox = this.getInbox().filter(em => activeIds.has(em.issueId));
+    if (!activeIssues || activeIssues.length === 0) {
+      return this.getInbox();
+    }
 
-    // Ensure every active issue has an email notification in the inbox
+    const activeIds = new Set(activeIssues.map(i => i.id));
+    const currentInbox = this.getInbox().filter(em => activeIds.has(em.issueId));
     const existingEmailIssueIds = new Set(currentInbox.map(e => e.issueId));
+
+    let updatedInbox = [...currentInbox];
     activeIssues.forEach(issue => {
       if (!existingEmailIssueIds.has(issue.id)) {
-        const generated = this.sendAdminIssueAlert(issue);
-        currentInbox = [generated, ...currentInbox];
+        const generated = this.buildAdminIssueAlert(issue);
+        updatedInbox = [generated, ...updatedInbox];
       }
     });
 
-    this.saveInbox(currentInbox);
-    return currentInbox;
+    this.saveInbox(updatedInbox);
+    return updatedInbox;
   },
 
   clearInbox(): void {

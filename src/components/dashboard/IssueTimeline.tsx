@@ -70,8 +70,8 @@ export const IssueTimeline: React.FC<IssueTimelineProps> = ({
                 )}
 
                 {recorded?.timestamp && (
-                  <span className="text-[10px] text-slate-400 mt-1 leading-tight hidden sm:block">
-                    {recorded.timestamp.split(' ')[1]} {recorded.timestamp.split(' ')[2]}
+                  <span className="text-[10px] text-slate-500 font-medium mt-1 leading-tight block">
+                    {recorded.timestamp.split(' ')[0]} {recorded.timestamp.split(' ')[1]?.replace(',', '')}
                   </span>
                 )}
               </div>

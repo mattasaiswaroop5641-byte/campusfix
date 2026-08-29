@@ -404,12 +404,21 @@ app.patch('/api/issues/:id', async (req, res) => {
   const updates = req.body;
   updates.updatedAt = new Date().toLocaleString();
 
-  // Find issue from memory or DB
-  let updatedIssue = inMemoryIssues.find(i => i.id === id);
-  if (updatedIssue) {
-    Object.assign(updatedIssue, updates);
-  } else {
-    updatedIssue = { id, ...updates };
+  // Find issue from memory or DB to retain reporterEmail and details
+  let existingIssue = inMemoryIssues.find(i => i.id === id);
+  if (!existingIssue && mongoose.connection.readyState === 1) {
+    try {
+      const dbIssue = await Issue.findOne({ id });
+      if (dbIssue) existingIssue = dbIssue.toObject ? dbIssue.toObject() : dbIssue;
+    } catch (e) {}
+  }
+
+  const updatedIssue = { ...(existingIssue || {}), ...updates, id };
+
+  // Update in-memory cache
+  inMemoryIssues = inMemoryIssues.map(i => i.id === id ? updatedIssue : i);
+  if (!inMemoryIssues.some(i => i.id === id)) {
+    inMemoryIssues.unshift(updatedIssue);
   }
 
   // 1. DISPATCH EMAILS IMMEDIATELY

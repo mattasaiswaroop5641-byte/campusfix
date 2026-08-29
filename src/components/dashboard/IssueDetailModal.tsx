@@ -18,11 +18,12 @@ import {
 import { CATEGORIES } from '../../data/demoData';
 
 export const IssueDetailModal: React.FC = () => {
-  const { selectedIssue, setSelectedIssue, currentUser } = useApp();
+  const { selectedIssue, setSelectedIssue, issues } = useApp();
 
-  if (!selectedIssue) return null;
+  const issue = (selectedIssue ? issues.find(i => i.id === selectedIssue.id) : null) || selectedIssue;
+  if (!issue) return null;
 
-  const catObj = CATEGORIES.find(c => c.name === selectedIssue.category);
+  const catObj = CATEGORIES.find(c => c.name === issue.category);
 
   return (
     <div className="fixed inset-0 z-50 overflow-y-auto bg-slate-950/70 backdrop-blur-xs flex items-center justify-center p-4 sm:p-6 animate-in fade-in duration-200">
@@ -39,23 +40,23 @@ export const IssueDetailModal: React.FC = () => {
 
           <div className="flex items-center gap-2 mb-2">
             <span className="px-3 py-1 rounded-lg bg-blue-600 text-white font-mono font-bold text-xs shadow-xs">
-              {selectedIssue.id}
+              {issue.id}
             </span>
             <span className="text-xl">{catObj?.icon || '⚙️'}</span>
             <span className="text-xs font-semibold text-slate-300">
-              {selectedIssue.category}
+              {issue.category}
             </span>
           </div>
 
           <h2 className="text-xl font-bold text-white pr-10">
-            {selectedIssue.title}
+            {issue.title}
           </h2>
 
           <div className="flex flex-wrap items-center gap-3 mt-3">
-            <PriorityBadge priority={selectedIssue.priority} size="sm" />
+            <PriorityBadge priority={issue.priority} size="sm" />
             <span className="text-xs text-slate-300 flex items-center gap-1">
               <Calendar className="w-3.5 h-3.5 text-slate-400" />
-              Reported on {selectedIssue.createdAt}
+              Reported on {issue.createdAt}
             </span>
           </div>
         </div>
@@ -69,9 +70,9 @@ export const IssueDetailModal: React.FC = () => {
               Resolution Progress Tracking
             </h4>
             <IssueTimeline
-              currentStatus={selectedIssue.status}
-              timeline={selectedIssue.timeline}
-              assignedStaff={selectedIssue.assignedStaff}
+              currentStatus={issue.status}
+              timeline={issue.timeline}
+              assignedStaff={issue.assignedStaff}
             />
           </div>
 
@@ -82,26 +83,26 @@ export const IssueDetailModal: React.FC = () => {
                 <MapPin className="w-4 h-4 text-blue-500" />
                 <span>Incident Location</span>
               </div>
-              <p className="text-sm font-bold text-slate-900">{selectedIssue.location}</p>
-              <p className="text-xs text-slate-500">{selectedIssue.block} • {selectedIssue.department} Dept</p>
+              <p className="text-sm font-bold text-slate-900">{issue.location}</p>
+              <p className="text-xs text-slate-500">{issue.block} • {issue.department} Dept</p>
             </div>
 
             <div className="p-4 rounded-2xl bg-white border border-slate-200">
               <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-slate-400 mb-2">
-                {selectedIssue.reporterType === 'Student' ? (
+                {issue.reporterType === 'Student' ? (
                   <GraduationCap className="w-4 h-4 text-blue-500" />
                 ) : (
                   <Briefcase className="w-4 h-4 text-indigo-500" />
                 )}
                 <span>Reported By</span>
               </div>
-              <p className="text-sm font-bold text-slate-900">{selectedIssue.reporter}</p>
+              <p className="text-sm font-bold text-slate-900">{issue.reporter}</p>
               <p className="text-xs text-slate-500">
-                {selectedIssue.reporterType} • {selectedIssue.department}
-                {selectedIssue.reporterType === 'Student' && selectedIssue.section && selectedIssue.section !== 'N/A' && (
-                  <> • <strong className="text-blue-600">{selectedIssue.section}</strong></>
+                {issue.reporterType} • {issue.department}
+                {issue.reporterType === 'Student' && issue.section && issue.section !== 'N/A' && (
+                  <> • <strong className="text-blue-600">{issue.section}</strong></>
                 )}
-                {selectedIssue.reporterType === 'Faculty' && (
+                {issue.reporterType === 'Faculty' && (
                   <span className="text-slate-400"> (Section: N/A)</span>
                 )}
               </p>
@@ -114,17 +115,17 @@ export const IssueDetailModal: React.FC = () => {
               Problem Description
             </h4>
             <div className="p-4 bg-slate-50 rounded-2xl border border-slate-200 text-sm text-slate-800 leading-relaxed">
-              {selectedIssue.description}
+              {issue.description}
             </div>
 
-            {selectedIssue.imageUrl && (
+            {issue.imageUrl && (
               <div className="mt-3">
                 <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400 block mb-1.5">
                   Attached Photo Proof
                 </span>
                 <div className="rounded-2xl overflow-hidden border border-slate-200 bg-slate-100 max-h-64 flex items-center justify-center">
                   <img
-                    src={selectedIssue.imageUrl}
+                    src={issue.imageUrl}
                     alt="Problem attachment"
                     className="w-full h-full object-cover max-h-64 rounded-2xl"
                   />
@@ -134,7 +135,7 @@ export const IssueDetailModal: React.FC = () => {
           </div>
 
           {/* AI Assistance Analysis Card */}
-          {selectedIssue.aiAnalysis && (
+          {issue.aiAnalysis && (
             <div className="p-5 rounded-2xl bg-gradient-to-br from-indigo-900 via-slate-900 to-blue-950 text-white shadow-md relative overflow-hidden">
               <div className="flex items-center justify-between mb-3">
                 <div className="flex items-center gap-2">
@@ -146,7 +147,7 @@ export const IssueDetailModal: React.FC = () => {
                   </span>
                 </div>
                 <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-indigo-500/20 text-indigo-200">
-                  {selectedIssue.aiAnalysis.confidence}% Confidence
+                  {issue.aiAnalysis.confidence}% Confidence
                 </span>
               </div>
 
@@ -156,7 +157,7 @@ export const IssueDetailModal: React.FC = () => {
                     AI Summary
                   </span>
                   <p className="text-xs sm:text-sm text-slate-200 leading-relaxed font-medium">
-                    "{selectedIssue.aiAnalysis.summary}"
+                    "{issue.aiAnalysis.summary}"
                   </p>
                 </div>
 
@@ -165,7 +166,7 @@ export const IssueDetailModal: React.FC = () => {
                     Recommended Action
                   </span>
                   <p className="text-xs sm:text-sm text-emerald-200 leading-relaxed">
-                    {selectedIssue.aiAnalysis.recommendedAction}
+                    {issue.aiAnalysis.recommendedAction}
                   </p>
                 </div>
               </div>
@@ -178,7 +179,7 @@ export const IssueDetailModal: React.FC = () => {
               Status Change History
             </h4>
             <div className="space-y-2">
-              {selectedIssue.timeline.map((step, idx) => (
+              {issue.timeline.map((step, idx) => (
                 <div key={idx} className="flex items-start justify-between p-3 rounded-xl bg-slate-50 border border-slate-200/70 text-xs">
                   <div>
                     <span className="font-bold text-slate-800">{step.status}</span>

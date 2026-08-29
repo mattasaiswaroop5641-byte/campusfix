@@ -384,11 +384,22 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
           setSelectedIssue(updated);
         }
 
-        // Sync updates to MongoDB Atlas
+        // Sync updates to MongoDB Atlas & trigger User status notification emails
         apiService.updateIssue(issueId, { 
           status, 
           assignedStaff: updated.assignedStaff, 
-          timeline: updatedTimeline 
+          timeline: updatedTimeline,
+          reporterEmail: updated.reporterEmail,
+          reporter: updated.reporter,
+          reporterType: updated.reporterType,
+          reporterRegNo: updated.reporterRegNo,
+          title: updated.title,
+          description: updated.description,
+          category: updated.category,
+          location: updated.location,
+          block: updated.block,
+          department: updated.department,
+          section: updated.section
         }).catch(() => {});
 
         return updated;

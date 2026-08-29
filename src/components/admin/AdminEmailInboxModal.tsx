@@ -27,14 +27,27 @@ export const AdminEmailInboxModal: React.FC<AdminEmailInboxModalProps> = ({ isOp
 
   React.useEffect(() => {
     if (isOpen) {
-      setEmails(emailService.syncWithIssues(issues));
+      const synced = emailService.syncWithIssues(issues);
+      setEmails(synced);
+      if (synced.length > 0) {
+        setSelectedEmail(prev => {
+          if (prev && synced.some(e => e.id === prev.id)) {
+            return prev;
+          }
+          return synced[0];
+        });
+      }
     }
   }, [issues, isOpen]);
 
   if (!isOpen) return null;
 
   const refreshEmails = () => {
-    setEmails(emailService.syncWithIssues(issues));
+    const synced = emailService.syncWithIssues(issues);
+    setEmails(synced);
+    if (synced.length > 0 && !selectedEmail) {
+      setSelectedEmail(synced[0]);
+    }
   };
 
   const handleSelectEmail = (email: AdminEmailNotification) => {
