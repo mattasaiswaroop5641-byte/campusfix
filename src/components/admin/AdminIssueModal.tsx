@@ -20,27 +20,29 @@ import {
 import confetti from 'canvas-confetti';
 
 export const AdminIssueModal: React.FC = () => {
-  const { selectedIssue, setSelectedIssue, updateIssueStatus, assignStaff, deleteIssue } = useApp();
+  const { selectedIssue, setSelectedIssue, updateIssueStatus, assignStaff, deleteIssue, issues } = useApp();
 
-  const [selectedStaff, setSelectedStaff] = useState<string>(selectedIssue?.assignedStaff || MAINTENANCE_STAFF[0]);
+  const issue = (selectedIssue ? issues.find(i => i.id === selectedIssue.id) : null) || selectedIssue;
+
+  const [selectedStaff, setSelectedStaff] = useState<string>(issue?.assignedStaff || MAINTENANCE_STAFF[0]);
   const [customNote, setCustomNote] = useState<string>('');
 
-  if (!selectedIssue) return null;
+  if (!issue) return null;
 
   const handleAcknowledge = () => {
-    updateIssueStatus(selectedIssue.id, 'Acknowledged', 'Campus Admin acknowledged ticket and initiated review.');
+    updateIssueStatus(issue.id, 'Acknowledged', 'Campus Admin acknowledged ticket and initiated review.');
   };
 
   const handleAssign = () => {
-    assignStaff(selectedIssue.id, selectedStaff);
+    assignStaff(issue.id, selectedStaff);
   };
 
   const handleStartWork = () => {
-    updateIssueStatus(selectedIssue.id, 'In Progress', `Maintenance technician ${selectedIssue.assignedStaff || selectedStaff} began on-site repair.`, selectedIssue.assignedStaff || selectedStaff);
+    updateIssueStatus(issue.id, 'In Progress', `Maintenance technician ${issue.assignedStaff || selectedStaff} began on-site repair.`, issue.assignedStaff || selectedStaff);
   };
 
   const handleResolve = () => {
-    updateIssueStatus(selectedIssue.id, 'Resolved', customNote || 'Issue diagnosed, repaired, and verified operational by campus maintenance team.');
+    updateIssueStatus(issue.id, 'Resolved', customNote || 'Issue diagnosed, repaired, and verified operational by campus maintenance team.');
     try {
       confetti({ particleCount: 70, spread: 70, origin: { y: 0.6 } });
     } catch (e) {}
@@ -61,23 +63,23 @@ export const AdminIssueModal: React.FC = () => {
 
           <div className="flex flex-wrap items-center gap-2 mb-2">
             <span className="px-3 py-1 rounded-lg bg-blue-600 text-white font-mono font-bold text-xs shadow-xs">
-              {selectedIssue.id}
+              {issue.id}
             </span>
             <span className="text-xs font-semibold px-2.5 py-0.5 rounded-full bg-slate-800 text-slate-300">
-              {selectedIssue.category}
+              {issue.category}
             </span>
-            <StatusBadge status={selectedIssue.status} size="sm" />
+            <StatusBadge status={issue.status} size="sm" />
           </div>
 
           <h2 className="text-xl font-bold text-white pr-10">
-            {selectedIssue.title}
+            {issue.title}
           </h2>
 
           <div className="flex flex-wrap items-center gap-3 mt-3">
-            <PriorityBadge priority={selectedIssue.priority} size="sm" />
+            <PriorityBadge priority={issue.priority} size="sm" />
             <span className="text-xs text-slate-400 flex items-center gap-1">
               <Calendar className="w-3.5 h-3.5" />
-              Logged: {selectedIssue.createdAt}
+              Logged: {issue.createdAt}
             </span>
           </div>
         </div>
@@ -93,7 +95,7 @@ export const AdminIssueModal: React.FC = () => {
                 Administrative Dispatch & Status Workflow
               </span>
               <span className="text-xs font-semibold text-blue-700">
-                Current Status: <strong>{selectedIssue.status}</strong>
+                Current Status: <strong>{issue.status}</strong>
               </span>
             </div>
 
@@ -104,9 +106,9 @@ export const AdminIssueModal: React.FC = () => {
               <button
                 type="button"
                 onClick={handleAcknowledge}
-                disabled={selectedIssue.status !== 'Submitted'}
+                disabled={issue.status !== 'Submitted'}
                 className={`p-3 rounded-xl border text-xs font-bold flex flex-col items-center gap-1.5 transition-all ${
-                  selectedIssue.status === 'Submitted'
+                  issue.status === 'Submitted'
                     ? 'bg-purple-600 hover:bg-purple-700 text-white border-purple-600 shadow-md cursor-pointer'
                     : 'bg-slate-100 text-slate-400 border-slate-200 cursor-not-allowed opacity-60'
                 }`}
@@ -119,7 +121,7 @@ export const AdminIssueModal: React.FC = () => {
               <button
                 type="button"
                 onClick={handleAssign}
-                disabled={selectedIssue.status === 'Resolved'}
+                disabled={issue.status === 'Resolved'}
                 className="p-3 rounded-xl border text-xs font-bold flex flex-col items-center gap-1.5 bg-amber-500 hover:bg-amber-600 text-white border-amber-500 shadow-md cursor-pointer transition-all"
               >
                 <UserCheck className="w-4 h-4" />
@@ -130,9 +132,9 @@ export const AdminIssueModal: React.FC = () => {
               <button
                 type="button"
                 onClick={handleStartWork}
-                disabled={selectedIssue.status === 'In Progress' || selectedIssue.status === 'Resolved'}
+                disabled={issue.status === 'In Progress' || issue.status === 'Resolved'}
                 className={`p-3 rounded-xl border text-xs font-bold flex flex-col items-center gap-1.5 transition-all ${
-                  selectedIssue.status !== 'In Progress' && selectedIssue.status !== 'Resolved'
+                  issue.status !== 'In Progress' && issue.status !== 'Resolved'
                     ? 'bg-indigo-600 hover:bg-indigo-700 text-white border-indigo-600 shadow-md cursor-pointer'
                     : 'bg-slate-100 text-slate-400 border-slate-200 cursor-not-allowed opacity-60'
                 }`}
@@ -145,9 +147,9 @@ export const AdminIssueModal: React.FC = () => {
               <button
                 type="button"
                 onClick={handleResolve}
-                disabled={selectedIssue.status === 'Resolved'}
+                disabled={issue.status === 'Resolved'}
                 className={`p-3 rounded-xl border text-xs font-bold flex flex-col items-center gap-1.5 transition-all ${
-                  selectedIssue.status !== 'Resolved'
+                  issue.status !== 'Resolved'
                     ? 'bg-emerald-600 hover:bg-emerald-700 text-white border-emerald-600 shadow-md cursor-pointer'
                     : 'bg-emerald-100 text-emerald-800 border-emerald-300 cursor-not-allowed'
                 }`}
@@ -190,7 +192,7 @@ export const AdminIssueModal: React.FC = () => {
           </div>
 
           {/* AI Assistance Analysis Card */}
-          {selectedIssue.aiAnalysis && (
+          {issue.aiAnalysis && (
             <div className="p-5 rounded-2xl bg-gradient-to-br from-indigo-950 via-slate-900 to-blue-950 text-white shadow-md">
               <div className="flex items-center justify-between mb-2">
                 <div className="flex items-center gap-2">
@@ -202,7 +204,7 @@ export const AdminIssueModal: React.FC = () => {
                   </span>
                 </div>
                 <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-indigo-500/20 text-indigo-200">
-                  {selectedIssue.aiAnalysis.confidence}% Confidence
+                  {issue.aiAnalysis.confidence}% Confidence
                 </span>
               </div>
 
@@ -212,7 +214,7 @@ export const AdminIssueModal: React.FC = () => {
                     Summary
                   </span>
                   <p className="text-xs text-slate-200 leading-relaxed font-medium">
-                    "{selectedIssue.aiAnalysis.summary}"
+                    "{issue.aiAnalysis.summary}"
                   </p>
                 </div>
 
@@ -221,7 +223,7 @@ export const AdminIssueModal: React.FC = () => {
                     Recommended Maintenance Action
                   </span>
                   <p className="text-xs text-emerald-200 leading-relaxed font-medium">
-                    {selectedIssue.aiAnalysis.recommendedAction}
+                    {issue.aiAnalysis.recommendedAction}
                   </p>
                 </div>
               </div>
@@ -235,26 +237,26 @@ export const AdminIssueModal: React.FC = () => {
                 <MapPin className="w-4 h-4 text-blue-500" />
                 <span>Location Detail</span>
               </div>
-              <p className="text-sm font-bold text-slate-900">{selectedIssue.location}</p>
-              <p className="text-xs text-slate-500">{selectedIssue.block} • {selectedIssue.department} Department</p>
+              <p className="text-sm font-bold text-slate-900">{issue.location}</p>
+              <p className="text-xs text-slate-500">{issue.block} • {issue.department} Department</p>
             </div>
 
             <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200">
               <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-slate-500 mb-1.5">
-                {selectedIssue.reporterType === 'Student' ? (
+                {issue.reporterType === 'Student' ? (
                   <GraduationCap className="w-4 h-4 text-blue-500" />
                 ) : (
                   <Briefcase className="w-4 h-4 text-indigo-500" />
                 )}
                 <span>Reporter Identity</span>
               </div>
-              <p className="text-sm font-bold text-slate-900">{selectedIssue.reporter}</p>
+              <p className="text-sm font-bold text-slate-900">{issue.reporter}</p>
               <p className="text-xs text-slate-500">
-                {selectedIssue.reporterType} • {selectedIssue.department}
-                {selectedIssue.reporterType === 'Student' && selectedIssue.section && selectedIssue.section !== 'N/A' && (
-                  <> • <strong className="text-blue-600">{selectedIssue.section}</strong></>
+                {issue.reporterType} • {issue.department}
+                {issue.reporterType === 'Student' && issue.section && issue.section !== 'N/A' && (
+                  <> • <strong className="text-blue-600">{issue.section}</strong></>
                 )}
-                {selectedIssue.reporterType === 'Faculty' && (
+                {issue.reporterType === 'Faculty' && (
                   <span className="text-slate-400 font-semibold"> (Section: N/A)</span>
                 )}
               </p>
@@ -267,17 +269,17 @@ export const AdminIssueModal: React.FC = () => {
               Reported Description
             </h4>
             <div className="p-4 bg-slate-50 rounded-2xl border border-slate-200 text-sm text-slate-800 leading-relaxed">
-              {selectedIssue.description}
+              {issue.description}
             </div>
 
-            {selectedIssue.imageUrl && (
+            {issue.imageUrl && (
               <div className="mt-3">
                 <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400 block mb-1.5">
                   Attached Photo Evidence
                 </span>
                 <div className="rounded-2xl overflow-hidden border border-slate-200 bg-slate-100 max-h-64 flex items-center justify-center">
                   <img
-                    src={selectedIssue.imageUrl}
+                    src={issue.imageUrl}
                     alt="Problem attachment"
                     className="w-full h-full object-cover max-h-64 rounded-2xl"
                   />
@@ -292,9 +294,9 @@ export const AdminIssueModal: React.FC = () => {
               Timeline Status
             </h4>
             <IssueTimeline
-              currentStatus={selectedIssue.status}
-              timeline={selectedIssue.timeline}
-              assignedStaff={selectedIssue.assignedStaff}
+              currentStatus={issue.status}
+              timeline={issue.timeline}
+              assignedStaff={issue.assignedStaff}
             />
           </div>
         </div>
@@ -302,7 +304,7 @@ export const AdminIssueModal: React.FC = () => {
         {/* Modal Footer */}
         <div className="p-4 bg-slate-50 border-t border-slate-200 flex items-center justify-between">
           <button
-            onClick={() => deleteIssue(selectedIssue.id)}
+            onClick={() => deleteIssue(issue.id)}
             className="px-4 py-2 text-xs font-bold text-rose-700 bg-rose-50 hover:bg-rose-100 border border-rose-200 rounded-xl transition-all shadow-xs cursor-pointer flex items-center gap-1.5"
           >
             <AlertTriangle className="w-3.5 h-3.5" />
