@@ -36,6 +36,7 @@ export const AdminManagementView: React.FC = () => {
   const [error, setError] = useState('');
   const [copiedKey, setCopiedKey] = useState(false);
   const [isPurging, setIsPurging] = useState(false);
+  const [twoFactorRequired, setTwoFactorRequired] = useState<boolean>(() => adminService.isTwoFactorRequired());
 
   const generateNew2FASecret = () => {
     const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ234567';
@@ -150,6 +151,57 @@ export const AdminManagementView: React.FC = () => {
             <span className="block text-[11px] font-bold text-indigo-300 uppercase tracking-wider">Live Tickets</span>
           </div>
         </div>
+      </div>
+
+      {/* 2FA & Email OTP Global Security Policy Switch Card */}
+      <div className="bg-white p-5 sm:p-6 rounded-3xl border border-slate-200 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div className="flex items-start sm:items-center gap-3.5">
+          <div className={`p-3 rounded-2xl flex-shrink-0 ${
+            twoFactorRequired 
+              ? 'bg-emerald-100 text-emerald-700' 
+              : 'bg-slate-100 text-slate-600'
+          }`}>
+            <ShieldCheck className="w-6 h-6" />
+          </div>
+          <div>
+            <div className="flex items-center gap-2">
+              <h2 className="text-base font-bold text-slate-900">Admin 2FA & Email OTP Verification</h2>
+              <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wide border ${
+                twoFactorRequired 
+                  ? 'bg-emerald-50 text-emerald-700 border-emerald-200' 
+                  : 'bg-slate-100 text-slate-600 border-slate-200'
+              }`}>
+                {twoFactorRequired ? 'Enforced (Active)' : 'Disabled (Direct Login)'}
+              </span>
+            </div>
+            <p className="text-xs text-slate-500 mt-0.5">
+              {twoFactorRequired 
+                ? 'All administrators are required to verify a 6-digit Email OTP or Google Authenticator code on sign-in.' 
+                : '2FA is turned OFF. Administrators will sign in directly with their email & password without OTP prompts.'}
+            </p>
+          </div>
+        </div>
+
+        <button
+          type="button"
+          onClick={() => {
+            const nextState = !twoFactorRequired;
+            setTwoFactorRequired(nextState);
+            adminService.setTwoFactorRequired(nextState);
+            if (nextState) {
+              addToast('success', '2FA Enforced', 'Admin login now requires Email OTP or Google Authenticator.');
+            } else {
+              addToast('info', '2FA Disabled', 'Admin login will now proceed directly with email and password.');
+            }
+          }}
+          className={`px-5 py-2.5 rounded-xl font-bold text-xs flex items-center justify-center gap-2 transition-all cursor-pointer shadow-sm active:scale-98 ${
+            twoFactorRequired
+              ? 'bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200'
+              : 'bg-emerald-600 hover:bg-emerald-700 text-white shadow-emerald-600/20'
+          }`}
+        >
+          <span>{twoFactorRequired ? 'Turn OFF 2FA Verification' : 'Turn ON 2FA Verification'}</span>
+        </button>
       </div>
 
       {/* Top Grid: Admin Enroller & Admin Directory */}

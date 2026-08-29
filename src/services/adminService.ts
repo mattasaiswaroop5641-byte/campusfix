@@ -106,5 +106,21 @@ export const adminService = {
     if (!found) return false;
     if (password && found.password && found.password !== password) return false;
     return true;
+  },
+
+  isTwoFactorRequired(): boolean {
+    try {
+      const val = localStorage.getItem('campusfix_admin_2fa_enabled');
+      if (val === null) return false; // Default is OFF (can be toggled ON anytime in Admin Panel)
+      return val === 'true';
+    } catch {
+      return false;
+    }
+  },
+
+  setTwoFactorRequired(enabled: boolean): void {
+    try {
+      localStorage.setItem('campusfix_admin_2fa_enabled', enabled ? 'true' : 'false');
+    } catch {}
   }
 };

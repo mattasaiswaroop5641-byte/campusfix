@@ -1,4 +1,4 @@
-﻿import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useApp } from '../../context/AppContext';
 import { totpService } from '../../services/totpService';
 import { securityService } from '../../services/securityService';
@@ -107,6 +107,16 @@ export const AdminLogin: React.FC<AdminLoginProps> = ({ onBack }) => {
     }
 
     setError('');
+
+    // Check if 2FA is enforced in Admin Settings
+    const is2FARequired = adminService.isTwoFactorRequired();
+    if (!is2FARequired) {
+      securityService.recordSuccessfulLogin(cleanEmail);
+      addToast('success', 'Admin Access Granted', 'Signed in directly (2FA is currently turned OFF).');
+      loginAdmin();
+      return;
+    }
+
     setStep('2fa');
     setTotpDigits(['', '', '', '', '', '']);
 
@@ -328,45 +338,57 @@ export const AdminLogin: React.FC<AdminLoginProps> = ({ onBack }) => {
             </div>
           </div>
 
-          {/* Verification Method Selector */}
-          <div>
-            <label className="block text-xs font-bold text-slate-700 mb-1.5 uppercase tracking-wide">
-              Preferred 2FA Method
-            </label>
-            <div className="grid grid-cols-2 gap-2">
-              <button
-                type="button"
-                onClick={() => setAuthMethod('email_otp')}
-                className={`p-3 rounded-xl border text-left transition-all cursor-pointer ${
-                  authMethod === 'email_otp'
-                    ? 'border-blue-600 bg-blue-50/70 text-blue-900 ring-2 ring-blue-500/20 font-bold'
-                    : 'border-slate-200 bg-slate-50 hover:bg-slate-100 text-slate-700 font-medium'
-                }`}
-              >
-                <div className="flex items-center gap-1.5 text-xs">
-                  <Mail className="w-4 h-4 text-blue-600" />
-                  <span>Email OTP Code</span>
-                </div>
-                <p className="text-[10px] text-slate-500 mt-0.5">Send 6-digit code to email</p>
-              </button>
+          {/* Verification Method Selector (Only shown if 2FA is ON) */}
+          {adminService.isTwoFactorRequired() ? (
+            <div>
+              <label className="block text-xs font-bold text-slate-700 mb-1.5 uppercase tracking-wide">
+                Preferred 2FA Method
+              </label>
+              <div className="grid grid-cols-2 gap-2">
+                <button
+                  type="button"
+                  onClick={() => setAuthMethod('email_otp')}
+                  className={`p-3 rounded-xl border text-left transition-all cursor-pointer ${
+                    authMethod === 'email_otp'
+                      ? 'border-blue-600 bg-blue-50/70 text-blue-900 ring-2 ring-blue-500/20 font-bold'
+                      : 'border-slate-200 bg-slate-50 hover:bg-slate-100 text-slate-700 font-medium'
+                  }`}
+                >
+                  <div className="flex items-center gap-1.5 text-xs">
+                    <Mail className="w-4 h-4 text-blue-600" />
+                    <span>Email OTP Code</span>
+                  </div>
+                  <p className="text-[10px] text-slate-500 mt-0.5">Send 6-digit code to email</p>
+                </button>
 
-              <button
-                type="button"
-                onClick={() => setAuthMethod('authenticator')}
-                className={`p-3 rounded-xl border text-left transition-all cursor-pointer ${
-                  authMethod === 'authenticator'
-                    ? 'border-indigo-600 bg-indigo-50/70 text-indigo-900 ring-2 ring-indigo-500/20 font-bold'
-                    : 'border-slate-200 bg-slate-50 hover:bg-slate-100 text-slate-700 font-medium'
-                }`}
-              >
-                <div className="flex items-center gap-1.5 text-xs">
-                  <Smartphone className="w-4 h-4 text-indigo-600" />
-                  <span>Authenticator App</span>
-                </div>
-                <p className="text-[10px] text-slate-500 mt-0.5">Google Authenticator TOTP</p>
-              </button>
+                <button
+                  type="button"
+                  onClick={() => setAuthMethod('authenticator')}
+                  className={`p-3 rounded-xl border text-left transition-all cursor-pointer ${
+                    authMethod === 'authenticator'
+                      ? 'border-indigo-600 bg-indigo-50/70 text-indigo-900 ring-2 ring-indigo-500/20 font-bold'
+                      : 'border-slate-200 bg-slate-50 hover:bg-slate-100 text-slate-700 font-medium'
+                  }`}
+                >
+                  <div className="flex items-center gap-1.5 text-xs">
+                    <Smartphone className="w-4 h-4 text-indigo-600" />
+                    <span>Authenticator App</span>
+                  </div>
+                  <p className="text-[10px] text-slate-500 mt-0.5">Google Authenticator TOTP</p>
+                </button>
+              </div>
             </div>
-          </div>
+          ) : (
+            <div className="p-3 rounded-xl bg-slate-50 border border-slate-200 flex items-center justify-between text-xs">
+              <span className="text-slate-600 flex items-center gap-1.5 font-medium">
+                <ShieldCheck className="w-4 h-4 text-slate-400" />
+                <span>2FA Policy: <strong>Disabled</strong></span>
+              </span>
+              <span className="text-[10px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
+                Direct Password Sign-In
+              </span>
+            </div>
+          )}
 
           <button
             type="submit"
@@ -377,6 +399,11 @@ export const AdminLogin: React.FC<AdminLoginProps> = ({ onBack }) => {
               <>
                 <RefreshCw className="w-4 h-4 animate-spin text-blue-400" />
                 <span>Sending Verification Code to Email...</span>
+              </>
+            ) : !adminService.isTwoFactorRequired() ? (
+              <>
+                <span>Sign In as Administrator</span>
+                <CheckCircle2 className="w-4 h-4 text-emerald-400" />
               </>
             ) : (
               <>
