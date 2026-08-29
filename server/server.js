@@ -199,10 +199,11 @@ app.post('/api/auth/send-admin-otp', async (req, res) => {
 
     if (transporter) {
       const mailOptions = {
-        from: `"CampusFix Security Center" <${GMAIL_USER}>`,
+        from: `"CampusFix Security" <${GMAIL_USER}>`,
         to: cleanEmail,
         replyTo: GMAIL_USER,
-        subject: `🔐 [CAMPUSFIX] Your Admin Login Verification Code: ${otp}`,
+        subject: `CampusFix Admin Verification Code: ${otp}`,
+        text: `Hello Administrator,\n\nYour CampusFix login verification code is: ${otp}\n\nThis code is valid for 5 minutes. Please enter it in the Admin Login window to complete sign in.\n\nDispatched from ${GMAIL_USER}`,
         html: `
           <div style="font-family: Arial, sans-serif; max-width: 540px; margin: 0 auto; padding: 24px; border: 1px solid #e2e8f0; border-radius: 16px; background-color: #ffffff;">
             <div style="background: linear-gradient(135deg, #0f172a, #1e1b4b); color: #ffffff; padding: 20px; border-radius: 12px; text-align: center;">
