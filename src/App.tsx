@@ -76,24 +76,22 @@ export function AppContent() {
   const isFaculty = role === 'faculty';
   const isAdmin = role === 'admin';
 
-  // Strict user isolation matching: Email, Reg Number, ID, or verified combination
+  // Strict user isolation matching: Email, Reg Number, ID, or verified reporter name
   const userSubmissions = issues.filter(i => {
     if (!currentUser) return false;
-    if (i.reporterEmail && currentUser.email && i.reporterEmail.toLowerCase() === currentUser.email.toLowerCase()) {
+    if (i.reporterEmail && currentUser.email && i.reporterEmail.trim().toLowerCase() === currentUser.email.trim().toLowerCase()) {
       return true;
     }
-    if (i.reporterRegNo && currentUser.regNumber && i.reporterRegNo.toUpperCase() === currentUser.regNumber.toUpperCase()) {
+    if (i.reporterRegNo && currentUser.regNumber && i.reporterRegNo.trim().toUpperCase() === currentUser.regNumber.trim().toUpperCase()) {
       return true;
     }
     if (i.reporterId && currentUser.id && i.reporterId === currentUser.id) {
       return true;
     }
-    return (
-      i.reporter.trim().toLowerCase() === currentUser.name.trim().toLowerCase() &&
-      i.department === currentUser.department &&
-      i.block === currentUser.block &&
-      (!currentUser.regNumber || !i.reporterRegNo || i.reporterRegNo === currentUser.regNumber)
-    );
+    if (i.reporter && currentUser.name && i.reporter.trim().toLowerCase() === currentUser.name.trim().toLowerCase()) {
+      return true;
+    }
+    return false;
   });
 
   const myReports = isAdmin ? issues : (reportsScope === 'my' ? userSubmissions : issues);

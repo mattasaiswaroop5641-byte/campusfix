@@ -110,8 +110,17 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         const remoteIssues = await apiService.fetchIssues();
         if (isMounted && remoteIssues && Array.isArray(remoteIssues)) {
           setIssues(prev => {
-            if (JSON.stringify(prev) !== JSON.stringify(remoteIssues)) {
-              return remoteIssues;
+            // Merge remote with any unsaved local issues
+            const map = new Map<string, CampusIssue>();
+            remoteIssues.forEach(i => map.set(i.id, i));
+            prev.forEach(i => {
+              if (!map.has(i.id)) {
+                map.set(i.id, i);
+              }
+            });
+            const merged = Array.from(map.values());
+            if (JSON.stringify(prev) !== JSON.stringify(merged)) {
+              return merged;
             }
             return prev;
           });
@@ -408,6 +417,11 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       setSelectedIssue(null);
     }
 
+    // Clean up corresponding email notification
+    try {
+      emailService.removeEmailByIssueId(issueId);
+    } catch {}
+
     // Delete in MongoDB Atlas
     apiService.deleteIssue(issueId).catch(() => {});
 
@@ -430,6 +444,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const resetAllData = () => {
     const fresh = storageService.clearIssues();
     setIssues(fresh);
+    try {
+      emailService.clearInbox();
+    } catch {}
     addToast('info', 'Database Cleared', 'All issues have been cleared for a fresh session.');
   };
 
@@ -437,6 +454,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     storageService.clearIssues();
     setIssues([]);
     setSelectedIssue(null);
+    try {
+      emailService.clearInbox();
+    } catch {}
     try {
       await apiService.purgeAllIssues();
     } catch {}
@@ -454,15 +474,28 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   };
 
   const purgeResolvedOlderThan3Days = async () => {
-    const { issues: localRetained, deletedCount: localCount } = storageService.purgeResolvedOlderThan3Days();
-    setIssues(localRetained);
+    const threeDaysAgo = new Date(Date.now() - 3 * 24 * 60 * 60 * 1000);
+    const beforeCount = issues.length;
+    const remaining = issues.filter(issue => {
+      if (issue.status !== 'Resolved') return true;
+      const dateToCheck = issue.updatedAt ? new Date(issue.updatedAt) : new Date(issue.createdAt);
+      return dateToCheck >= threeDaysAgo;
+    });
+
+    setIssues(remaining);
+    storageService.saveIssues(remaining);
+    try {
+      emailService.syncWithIssues(remaining);
+    } catch {}
+    const deletedCount = beforeCount - remaining.length;
+
     let remoteCount = 0;
     try {
       const res = await apiService.purgeResolvedOlderThan3Days();
       remoteCount = res.deletedCount || 0;
     } catch {}
 
-    const totalCleaned = Math.max(localCount, remoteCount);
+    const totalCleaned = Math.max(deletedCount, remoteCount);
     if (totalCleaned > 0) {
       addToast('info', '3-Day Retention Policy Executed', `Cleaned ${totalCleaned} resolved ticket(s) older than 3 days.`);
     } else {

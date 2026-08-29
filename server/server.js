@@ -292,14 +292,19 @@ app.post('/api/issues', async (req, res) => {
   // Update in-memory store immediately
   inMemoryIssues = [issueData, ...inMemoryIssues.filter(i => i.id !== issueData.id)];
 
-  // 1. DISPATCH EMAILS IMMEDIATELY (Decoupled from DB speed)
-  if (transporter) {
+    const allAdminRecipients = Array.from(new Set([
+      ...ADMIN_EMAILS,
+      req.body.activeAdminEmail,
+      req.headers['x-admin-email']
+    ].filter(Boolean)));
+
     // A. Admin Alert Email
     transporter.sendMail({
       from: `"CampusFix Official" <${GMAIL_USER}>`,
       replyTo: GMAIL_USER,
-      to: ADMIN_EMAILS.join(', '),
+      to: allAdminRecipients.join(', '),
       subject: `🚨 [CAMPUSFIX ADMIN ALERT] Ticket #${issueData.id}: ${issueData.category} reported by ${issueData.reporter}`,
+      text: `CAMPUSFIX ADMIN ALERT\n\nTicket #${issueData.id} has been reported.\nCategory: ${issueData.category}\nLocation: ${issueData.location} (${issueData.block})\nPriority: ${issueData.priority}\nReporter: ${issueData.reporter} (${issueData.reporterType} - ${issueData.department})\nDescription: ${issueData.description}\n\nPlease open the Admin Portal to assign staff.`,
       html: `
         <div style="font-family: Arial, sans-serif; max-width: 600px; padding: 24px; border: 1px solid #e2e8f0; border-radius: 12px; background: #ffffff;">
           <div style="background: #dc2626; color: #ffffff; padding: 16px 20px; border-radius: 8px; margin-bottom: 16px;">

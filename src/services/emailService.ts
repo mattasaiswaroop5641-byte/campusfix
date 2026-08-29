@@ -22,8 +22,9 @@ export interface AdminEmailNotification {
 
 const EMAIL_STORAGE_KEY = 'campusfix_admin_email_inbox';
 export const PRIMARY_ADMIN_EMAIL = 'mattasaiswaroop5641@gmail.com';
-export const SECONDARY_ADMIN_EMAIL = 'cmapusfix5641@gmail.com';
-export const ADMIN_EMAILS = [PRIMARY_ADMIN_EMAIL, SECONDARY_ADMIN_EMAIL, 'campusfix5641@gmail.com'];
+export const SECONDARY_ADMIN_EMAIL = 'campusfix5641@gmail.com';
+export const TERTIARY_ADMIN_EMAIL = 'hemanthvaka6170@gmail.com';
+export const ADMIN_EMAILS = [PRIMARY_ADMIN_EMAIL, SECONDARY_ADMIN_EMAIL, TERTIARY_ADMIN_EMAIL];
 
 /**
  * ============================================================================
@@ -169,6 +170,28 @@ export const emailService = {
   markAllAsRead(): void {
     const inbox = this.getInbox().map(em => ({ ...em, read: true }));
     this.saveInbox(inbox);
+  },
+
+  removeEmailByIssueId(issueId: string): void {
+    const inbox = this.getInbox().filter(em => em.issueId !== issueId);
+    this.saveInbox(inbox);
+  },
+
+  syncWithIssues(activeIssues: CampusIssue[]): AdminEmailNotification[] {
+    const activeIds = new Set(activeIssues.map(i => i.id));
+    let currentInbox = this.getInbox().filter(em => activeIds.has(em.issueId));
+
+    // Ensure every active issue has an email notification in the inbox
+    const existingEmailIssueIds = new Set(currentInbox.map(e => e.issueId));
+    activeIssues.forEach(issue => {
+      if (!existingEmailIssueIds.has(issue.id)) {
+        const generated = this.sendAdminIssueAlert(issue);
+        currentInbox = [generated, ...currentInbox];
+      }
+    });
+
+    this.saveInbox(currentInbox);
+    return currentInbox;
   },
 
   clearInbox(): void {

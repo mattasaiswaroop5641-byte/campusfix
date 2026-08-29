@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useApp } from '../../context/AppContext';
-import { AdminEmailNotification, emailService, PRIMARY_ADMIN_EMAIL, SECONDARY_ADMIN_EMAIL, ADMIN_EMAILS } from '../../services/emailService';
+import { AdminEmailNotification, emailService, PRIMARY_ADMIN_EMAIL, SECONDARY_ADMIN_EMAIL, TERTIARY_ADMIN_EMAIL, ADMIN_EMAILS } from '../../services/emailService';
 import { 
   Mail, 
   X, 
@@ -22,13 +22,19 @@ interface AdminEmailInboxModalProps {
 
 export const AdminEmailInboxModal: React.FC<AdminEmailInboxModalProps> = ({ isOpen, onClose }) => {
   const { issues, setSelectedIssue, addToast } = useApp();
-  const [emails, setEmails] = useState<AdminEmailNotification[]>(() => emailService.getInbox());
+  const [emails, setEmails] = useState<AdminEmailNotification[]>(() => emailService.syncWithIssues(issues));
   const [selectedEmail, setSelectedEmail] = useState<AdminEmailNotification | null>(null);
+
+  React.useEffect(() => {
+    if (isOpen) {
+      setEmails(emailService.syncWithIssues(issues));
+    }
+  }, [issues, isOpen]);
 
   if (!isOpen) return null;
 
   const refreshEmails = () => {
-    setEmails(emailService.getInbox());
+    setEmails(emailService.syncWithIssues(issues));
   };
 
   const handleSelectEmail = (email: AdminEmailNotification) => {
@@ -78,12 +84,15 @@ export const AdminEmailInboxModal: React.FC<AdminEmailInboxModalProps> = ({ isOp
                 <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-blue-500/20 text-blue-300 border border-blue-400/30">
                   {PRIMARY_ADMIN_EMAIL}
                 </span>
-                <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-indigo-500/20 text-indigo-300 border border-indigo-400/30">
+                <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-400/30">
                   {SECONDARY_ADMIN_EMAIL}
+                </span>
+                <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-indigo-500/20 text-indigo-300 border border-indigo-400/30">
+                  {TERTIARY_ADMIN_EMAIL}
                 </span>
               </div>
               <p className="text-xs text-slate-400 mt-0.5">
-                Automated email alerts dispatched instantly when issues are raised across campus.
+                Automated email alerts dispatched instantly to all registered administrators.
               </p>
             </div>
           </div>

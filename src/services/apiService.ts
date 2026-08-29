@@ -20,56 +20,73 @@ export const apiService = {
 
   async fetchIssues(): Promise<CampusIssue[]> {
     try {
-      const res = await fetch(`${API_BASE_URL}/issues`, { signal: AbortSignal.timeout(2000) });
+      const res = await fetch(`${API_BASE_URL}/issues`, { signal: AbortSignal.timeout(6000) });
       if (res.ok) {
         const data = await res.json();
-        storageService.saveIssues(data); // Cache in local store
-        return data;
+        if (Array.isArray(data)) {
+          return data;
+        }
       }
     } catch (e) {}
     return storageService.getIssues();
   },
 
   async createIssue(issue: CampusIssue): Promise<CampusIssue> {
+    // Save to local cache immediately
+    const existing = storageService.getIssues();
+    const updated = [issue, ...existing.filter(i => i.id !== issue.id)];
+    storageService.saveIssues(updated);
+
     try {
       const res = await fetch(`${API_BASE_URL}/issues`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(issue),
-        signal: AbortSignal.timeout(2000)
+        signal: AbortSignal.timeout(15000)
       });
       if (res.ok) {
-        return await res.json();
+        const saved = await res.json();
+        return saved;
       }
     } catch (e) {}
     return issue;
   },
 
   async updateIssue(id: string, updates: Partial<CampusIssue>): Promise<void> {
+    const existing = storageService.getIssues();
+    const updated = existing.map(i => i.id === id ? { ...i, ...updates } : i);
+    storageService.saveIssues(updated);
+
     try {
       await fetch(`${API_BASE_URL}/issues/${id}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(updates),
-        signal: AbortSignal.timeout(2000)
+        signal: AbortSignal.timeout(10000)
       });
     } catch (e) {}
   },
 
   async deleteIssue(id: string): Promise<void> {
+    const existing = storageService.getIssues();
+    const updated = existing.filter(i => i.id !== id);
+    storageService.saveIssues(updated);
+
     try {
       await fetch(`${API_BASE_URL}/issues/${id}`, {
         method: 'DELETE',
-        signal: AbortSignal.timeout(2000)
+        signal: AbortSignal.timeout(10000)
       });
     } catch (e) {}
   },
 
   async purgeAllIssues(): Promise<void> {
+    storageService.saveIssues([]);
+
     try {
       await fetch(`${API_BASE_URL}/issues`, {
         method: 'DELETE',
-        signal: AbortSignal.timeout(3000)
+        signal: AbortSignal.timeout(10000)
       });
     } catch (e) {}
   },
@@ -78,7 +95,7 @@ export const apiService = {
     try {
       const res = await fetch(`${API_BASE_URL}/admin/purge-resolved-3days`, {
         method: 'POST',
-        signal: AbortSignal.timeout(3000)
+        signal: AbortSignal.timeout(10000)
       });
       if (res.ok) {
         return await res.json();
