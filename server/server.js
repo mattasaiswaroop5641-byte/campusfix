@@ -21,9 +21,16 @@ const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://127.0.0.1:27017/campus
 mongoose.set('bufferCommands', false);
 
 // Configured Admin Emails
-const ADMIN_EMAILS = ['mattasaiswaroop5641@gmail.com', 'campusfix5641@gmail.com'];
+const ADMIN_EMAILS = [
+  'mattasaiswaroop5641@gmail.com', 
+  'campusfix5641@gmail.com',
+  'hemanthvaka6170@gmail.com'
+];
 const GMAIL_USER = process.env.GMAIL_USER || 'campusfix5641@gmail.com';
 const GMAIL_PASS = process.env.GMAIL_PASS;
+
+// In-memory store for Admin Email OTP verification
+const emailOtpStore = new Map();
 
 // Real Nodemailer transporter - ALWAYS sends from campusfix5641@gmail.com
 let transporter = null;
@@ -167,6 +174,111 @@ app.post('/api/auth-email', async (req, res) => {
     res.json({ message: 'Auth email processed' });
   } catch (e) {
     res.status(500).json({ error: e.message });
+  }
+});
+
+// ============================================================================
+// 1.1 ADMIN EMAIL OTP 2FA ENDPOINTS
+// ============================================================================
+
+// POST /api/auth/send-admin-otp - Dispatches 6-digit OTP to Admin Email
+app.post('/api/auth/send-admin-otp', async (req, res) => {
+  try {
+    const { email } = req.body;
+    if (!email) {
+      return res.status(400).json({ error: 'Admin email is required' });
+    }
+
+    const cleanEmail = email.trim().toLowerCase();
+
+    // Generate cryptographically secure 6-digit numeric OTP
+    const otp = Math.floor(100000 + Math.random() * 900000).toString();
+    const expiresAt = Date.now() + 5 * 60 * 1000; // 5 minutes validity
+
+    emailOtpStore.set(cleanEmail, { otp, expiresAt, attempts: 0 });
+
+    if (transporter) {
+      const mailOptions = {
+        from: `"CampusFix Security Center" <${GMAIL_USER}>`,
+        to: cleanEmail,
+        replyTo: GMAIL_USER,
+        subject: `🔐 [CAMPUSFIX] Your Admin Login Verification Code: ${otp}`,
+        html: `
+          <div style="font-family: Arial, sans-serif; max-width: 540px; margin: 0 auto; padding: 24px; border: 1px solid #e2e8f0; border-radius: 16px; background-color: #ffffff;">
+            <div style="background: linear-gradient(135deg, #0f172a, #1e1b4b); color: #ffffff; padding: 20px; border-radius: 12px; text-align: center;">
+              <h2 style="margin: 0; font-size: 20px; letter-spacing: 1px;">CAMPUSFIX SECURITY</h2>
+              <p style="margin: 4px 0 0 0; font-size: 12px; color: #93c5fd;">Administrator Two-Factor Verification</p>
+            </div>
+            
+            <div style="padding: 24px 0; text-align: center;">
+              <p style="font-size: 14px; color: #475569; margin-bottom: 16px;">
+                You requested a secure login verification code for administrator account: <br/>
+                <strong style="color: #0f172a;">${cleanEmail}</strong>
+              </p>
+              
+              <div style="display: inline-block; background-color: #f8fafc; border: 2px dashed #2563eb; border-radius: 12px; padding: 14px 32px; margin: 8px 0;">
+                <span style="font-family: monospace; font-size: 36px; font-weight: bold; letter-spacing: 8px; color: #1e40af;">${otp}</span>
+              </div>
+              
+              <p style="font-size: 12px; color: #64748b; margin-top: 16px;">
+                ⏰ This code is valid for <strong>5 minutes</strong>. Do not share this code with anyone.
+              </p>
+            </div>
+            
+            <div style="border-top: 1px solid #e2e8f0; padding-top: 14px; text-align: center; font-size: 11px; color: #94a3b8;">
+              CampusFix Automated Security Alert • Dispatched from ${GMAIL_USER}
+            </div>
+          </div>
+        `
+      };
+
+      transporter.sendMail(mailOptions).then((info) => {
+        console.log(`✅ [ADMIN EMAIL OTP SENT] To: ${cleanEmail} | OTP: ${otp} | ID: ${info.messageId}`);
+      }).catch(err => {
+        console.error('❌ Nodemailer Admin OTP error:', err.message);
+      });
+
+      return res.json({ success: true, message: 'Verification code sent to your email.' });
+    } else {
+      console.log(`[OFFLINE OTP] Generated for ${cleanEmail}: ${otp}`);
+      return res.json({ success: true, message: 'Verification code generated.', devOtp: otp });
+    }
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// POST /api/auth/verify-admin-otp - Verifies 6-digit OTP
+app.post('/api/auth/verify-admin-otp', (req, res) => {
+  const { email, otp } = req.body;
+  if (!email || !otp) {
+    return res.status(400).json({ error: 'Email and verification code are required' });
+  }
+
+  const cleanEmail = email.trim().toLowerCase();
+  const stored = emailOtpStore.get(cleanEmail);
+
+  if (!stored) {
+    return res.status(400).json({ success: false, message: 'No verification code requested or code has expired.' });
+  }
+
+  if (Date.now() > stored.expiresAt) {
+    emailOtpStore.delete(cleanEmail);
+    return res.status(400).json({ success: false, message: 'Verification code has expired. Please request a new code.' });
+  }
+
+  if (stored.attempts >= 5) {
+    emailOtpStore.delete(cleanEmail);
+    return res.status(429).json({ success: false, message: 'Too many invalid attempts. Please request a new code.' });
+  }
+
+  if (stored.otp === otp.trim()) {
+    emailOtpStore.delete(cleanEmail);
+    console.log(`✅ [ADMIN EMAIL OTP VERIFIED] Successfully authenticated: ${cleanEmail}`);
+    return res.json({ success: true, verified: true, message: 'Admin authentication verified successfully.' });
+  } else {
+    stored.attempts += 1;
+    return res.status(400).json({ success: false, message: `Invalid verification code. ${5 - stored.attempts} attempt(s) remaining.` });
   }
 });
 

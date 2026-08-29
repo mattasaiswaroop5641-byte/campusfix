@@ -97,5 +97,33 @@ export const apiService = {
         signal: AbortSignal.timeout(3000)
       });
     } catch (e) {}
+  },
+
+  async sendAdminEmailOtp(email: string): Promise<{ success: boolean; message?: string; devOtp?: string }> {
+    try {
+      const res = await fetch(`${API_BASE_URL}/auth/send-admin-otp`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email }),
+        signal: AbortSignal.timeout(4000)
+      });
+      return await res.json();
+    } catch (e: any) {
+      return { success: false, message: e.message || 'Failed to dispatch email verification code' };
+    }
+  },
+
+  async verifyAdminEmailOtp(email: string, otp: string): Promise<{ success: boolean; verified?: boolean; message?: string }> {
+    try {
+      const res = await fetch(`${API_BASE_URL}/auth/verify-admin-otp`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, otp }),
+        signal: AbortSignal.timeout(4000)
+      });
+      return await res.json();
+    } catch (e: any) {
+      return { success: false, message: e.message || 'Failed to verify verification code' };
+    }
   }
 };

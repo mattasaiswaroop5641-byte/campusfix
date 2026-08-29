@@ -31,6 +31,16 @@ const DEFAULT_ADMINS: AdminAccount[] = [
     role: 'Campus Admin',
     department: 'Central Maintenance',
     createdAt: 'Aug 28, 2026'
+  },
+  {
+    id: 'adm_3',
+    name: 'Hemanth Vaka (Admin)',
+    email: 'hemanthvaka6170@gmail.com',
+    password: 'Mgsai@1025',
+    twoFactorSecret: 'JBSWY3DPEHPK3PXP',
+    role: 'Campus Admin',
+    department: 'Campus Infrastructure',
+    createdAt: 'Aug 29, 2026'
   }
 ];
 
