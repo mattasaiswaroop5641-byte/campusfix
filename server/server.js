@@ -15,7 +15,7 @@ dotenv.config();
 
 const app = express();
 const PORT = process.env.PORT || 5000;
-const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://127.0.0.1:27017/campusfix';
+const MONGODB_URI = process.env.MONGODB_URI || 'mongodb+srv://hemanthvaka6170_db_user:6DNwyAkEFosqBZ0e@campusfixcluster.mf7dn7l.mongodb.net/campusfix?retryWrites=true&w=majority&appName=CampusFixCluster';
 
 // Disable Mongoose command buffering so queries don't hang if Atlas is unreachable
 mongoose.set('bufferCommands', false);
@@ -27,7 +27,7 @@ const ADMIN_EMAILS = [
   'hemanthvaka6170@gmail.com'
 ];
 const GMAIL_USER = process.env.GMAIL_USER || 'campusfix5641@gmail.com';
-const GMAIL_PASS = process.env.GMAIL_PASS;
+const GMAIL_PASS = process.env.GMAIL_PASS || 'qwuxwpwnjefwqoxe';
 
 // In-memory store for Admin Email OTP verification
 const emailOtpStore = new Map();
