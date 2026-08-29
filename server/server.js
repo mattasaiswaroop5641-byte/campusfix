@@ -292,6 +292,8 @@ app.post('/api/issues', async (req, res) => {
   // Update in-memory store immediately
   inMemoryIssues = [issueData, ...inMemoryIssues.filter(i => i.id !== issueData.id)];
 
+  // 1. DISPATCH EMAILS IMMEDIATELY (Decoupled from DB speed)
+  if (transporter) {
     const allAdminRecipients = Array.from(new Set([
       ...ADMIN_EMAILS,
       req.body.activeAdminEmail,

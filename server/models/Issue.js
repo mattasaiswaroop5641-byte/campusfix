@@ -26,14 +26,16 @@ const IssueSchema = new mongoose.Schema({
   description: { type: String, required: true },
   reporter: { type: String, required: true },
   reporterType: { type: String, enum: ['Student', 'Faculty'], required: true },
+  reporterId: { type: String },
+  reporterRegNo: { type: String },
+  reporterEmail: { type: String },
   department: { 
     type: String, 
-    enum: ['CSE', 'AI & ML', 'ECE', 'EEE', 'Civil', 'Mechanical', 'BCA', 'Other'],
     required: true 
   },
   block: { 
     type: String, 
-    enum: ['Block A', 'Block B', 'Block C', 'Block D'],
+    enum: ['Block A', 'Block H', 'Block N', 'Block U'],
     required: true 
   },
   section: { 
@@ -42,7 +44,6 @@ const IssueSchema = new mongoose.Schema({
   },
   category: { 
     type: String, 
-    enum: ['Electrical', 'Wi-Fi / Network', 'AC / HVAC', 'Plumbing', 'Furniture', 'Cleanliness', 'Computer / Equipment', 'Other'],
     required: true 
   },
   location: { type: String, required: true },
